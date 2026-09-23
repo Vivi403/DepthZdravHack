@@ -53,7 +53,9 @@ def clean(in_csv: str, out_csv: str) -> None:
     print(f"Убрано (пустой region, неразмеченные дубли): {dropped_empty}")
     print(f"Убрано (аномальные/нераспознанные пометки): {len(dropped_anomalous)}")
     for r in dropped_anomalous:
-        print(f"  study={r['study_uid']} path={r['relative_path']} region={r['region']!r}")
+        print(
+            f"  study={r['study_uid']} path={r['relative_path']} region={r['region']!r}"
+        )
     print(f"\nСохранено: {out_csv}")
 
 

@@ -154,7 +154,10 @@ def main() -> None:
     label_counts = Counter(r["region"] for r in train_rows)
     total = sum(label_counts.values())
     weights = torch.tensor(
-        [total / (3 * label_counts.get(region, 1)) for region in ["spine", "hip_left", "hip_right"]],
+        [
+            total / (3 * label_counts.get(region, 1))
+            for region in ["spine", "hip_left", "hip_right"]
+        ],
         dtype=torch.float32,
     ).to(device)
     print(f"Class weights (spine, hip_left, hip_right): {weights.tolist()}")
@@ -170,7 +173,9 @@ def main() -> None:
         train_loss, train_preds, train_labels = run_epoch(
             model, train_loader, criterion, device, optimizer
         )
-        val_loss, val_preds, val_labels = run_epoch(model, val_loader, criterion, device)
+        val_loss, val_preds, val_labels = run_epoch(
+            model, val_loader, criterion, device
+        )
 
         train_f1 = f1_score(train_labels, train_preds, average="macro", zero_division=0)
         val_f1 = f1_score(val_labels, val_preds, average="macro", zero_division=0)
@@ -184,15 +189,25 @@ def main() -> None:
         if val_f1 > best_val_f1:
             best_val_f1 = val_f1
             torch.save(
-                {"model_state_dict": model.state_dict(), "val_macro_f1": val_f1, "epoch": epoch},
+                {
+                    "model_state_dict": model.state_dict(),
+                    "val_macro_f1": val_f1,
+                    "epoch": epoch,
+                },
                 out_path,
             )
-            print(f"  -> новый лучший чекпоинт сохранён: {out_path} (val_macroF1={val_f1:.3f})")
+            print(
+                f"  -> новый лучший чекпоинт сохранён: {out_path} (val_macroF1={val_f1:.3f})"
+            )
 
     print(f"\nЛучший val_macroF1: {best_val_f1:.3f}")
     print("\nФинальный classification report (последняя эпоха, val):")
     target_names = [IDX_TO_REGION[i] for i in range(3)]
-    print(classification_report(val_labels, val_preds, target_names=target_names, zero_division=0))
+    print(
+        classification_report(
+            val_labels, val_preds, target_names=target_names, zero_division=0
+        )
+    )
 
 
 if __name__ == "__main__":

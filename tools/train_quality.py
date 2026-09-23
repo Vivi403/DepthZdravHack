@@ -173,7 +173,9 @@ def main() -> None:
     parser.add_argument("--no_pretrained", action="store_true")
     args = parser.parse_args()
 
-    out_path = Path(args.out) if args.out else Path(f"models/quality_{args.group}_best.pt")
+    out_path = (
+        Path(args.out) if args.out else Path(f"models/quality_{args.group}_best.pt")
+    )
     codes = SPINE_VIOLATION_CODES if args.group == "spine" else HIP_VIOLATION_CODES
 
     set_seed(args.seed)
@@ -186,8 +188,15 @@ def main() -> None:
         rows, val_frac=args.val_frac, test_frac=args.test_frac, seed=args.seed
     )
 
-    train_ds = QualityDataset(train_rows, group=args.group, image_size=args.image_size)
-    val_ds = QualityDataset(val_rows, group=args.group, image_size=args.image_size)
+    train_ds = QualityDataset(
+        train_rows, group=args.group, image_size=args.image_size, augment=True
+    )
+    val_ds = QualityDataset(
+        val_rows, group=args.group, image_size=args.image_size, augment=False
+    )
+    print(
+        f"Аугментация (яркость/контраст) train_ds: {train_ds.augment}"
+    )  # должно быть True
     print(f"train={len(train_ds)} val={len(val_ds)} (после фильтрации excluded_reason)")
 
     if len(val_ds) == 0 or len(train_ds) == 0:
@@ -211,12 +220,16 @@ def main() -> None:
         val_ds, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
     )
 
-    model = build_model(num_labels=len(codes), pretrained=not args.no_pretrained).to(device)
+    model = build_model(num_labels=len(codes), pretrained=not args.no_pretrained).to(
+        device
+    )
 
     # pos_weight по каждому лейблу отдельно -- ключевая мера борьбы с дисбалансом
     # классов (п.8.1 ТЗ прямо просит объяснить, как обрабатывается дисбаланс).
     # Считается ТОЛЬКО по train, чтобы не заглядывать в val.
-    train_targets = np.stack([train_ds[i]["violations"].numpy() for i in range(len(train_ds))])
+    train_targets = np.stack(
+        [train_ds[i]["violations"].numpy() for i in range(len(train_ds))]
+    )
     pos_counts = train_targets.sum(axis=0)
     neg_counts = len(train_ds) - pos_counts
     pos_weight = torch.tensor(
@@ -235,7 +248,9 @@ def main() -> None:
         train_loss, train_probs, train_targets_ep = run_epoch(
             model, train_loader, criterion, device, optimizer
         )
-        val_loss, val_probs, val_targets = run_epoch(model, val_loader, criterion, device)
+        val_loss, val_probs, val_targets = run_epoch(
+            model, val_loader, criterion, device
+        )
 
         val_metrics = compute_metrics(val_probs, val_targets, codes)
 
@@ -257,18 +272,28 @@ def main() -> None:
                 },
                 out_path,
             )
-            print(f"  -> новый лучший чекпоинт: {out_path} (val_macroF1={best_val_f1:.3f})")
+            print(
+                f"  -> новый лучший чекпоинт: {out_path} (val_macroF1={best_val_f1:.3f})"
+            )
 
     print(f"\nЛучший val_macroF1: {best_val_f1:.3f}")
     print("\nФинальные per-label метрики (последняя эпоха, val):")
     final_metrics = compute_metrics(val_probs, val_targets, codes)
     for code, m in final_metrics["per_label"].items():
-        auc_str = f"{m['roc_auc']:.3f}" if m["roc_auc"] is not None else "н/д (один класс в val)"
+        auc_str = (
+            f"{m['roc_auc']:.3f}"
+            if m["roc_auc"] is not None
+            else "н/д (один класс в val)"
+        )
         print(f"  {code}: F1={m['f1']:.3f} ROC-AUC={auc_str}")
 
     print(f"\nАгрегированный quality_class (есть хоть одно нарушение):")
-    print(f"  sensitivity (чувствительность к нарушениям): {final_metrics['quality_sensitivity']}")
-    print(f"  specificity (для качественных снимков): {final_metrics['quality_specificity']}")
+    print(
+        f"  sensitivity (чувствительность к нарушениям): {final_metrics['quality_sensitivity']}"
+    )
+    print(
+        f"  specificity (для качественных снимков): {final_metrics['quality_specificity']}"
+    )
     print(
         f"  TP={final_metrics['quality_tp']} FN={final_metrics['quality_fn']} "
         f"TN={final_metrics['quality_tn']} FP={final_metrics['quality_fp']}"
