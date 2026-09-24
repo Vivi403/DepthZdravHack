@@ -68,10 +68,10 @@ class LoadedStudy:
     path_to_study: str
     study_uid: str
     image_uid: str
-    pixel_array: np.ndarray  # float32, нормализован в [0, 1]
+    pixel_array: np.ndarray
     rows: int
     columns: int
-    pixel_spacing_mm: tuple[float, float] | None  # (row_spacing, col_spacing) или None
+    pixel_spacing_mm: tuple[float, float] | None
     technical_meta: dict = field(default_factory=dict)
 
 
@@ -155,7 +155,6 @@ def _normalize_pixels(ds: pydicom.Dataset) -> np.ndarray:
 
     arr = np.clip(arr / max_val, 0.0, 1.0)
 
-    # MONOCHROME1 инвертирован относительно MONOCHROME2 (яркость <-> плотность)
     if getattr(ds, "PhotometricInterpretation", "MONOCHROME2") == "MONOCHROME1":
         arr = 1.0 - arr
 
@@ -190,7 +189,7 @@ def _load_dicom_impl(path: str | Path) -> LoadedStudy:
 
     try:
         pixel_array = _normalize_pixels(ds)
-    except Exception as exc:  # noqa: BLE001 -- любая ошибка декодирования пикселей -> Failure
+    except Exception as exc:
         raise DicomLoadError(f"Не удалось декодировать пиксели {path}: {exc}") from exc
 
     pixel_spacing = _recover_pixel_spacing(ds)
@@ -202,7 +201,9 @@ def _load_dicom_impl(path: str | Path) -> LoadedStudy:
         )
 
     technical_meta = {
-        tag: str(getattr(ds, tag)) for tag in ALLOWED_TECHNICAL_TAGS if getattr(ds, tag, None)
+        tag: str(getattr(ds, tag))
+        for tag in ALLOWED_TECHNICAL_TAGS
+        if getattr(ds, tag, None)
     }
 
     return LoadedStudy(

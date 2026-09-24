@@ -21,7 +21,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from backend.analysis.hip.prosthesis_detector import estimate_prosthesis_likelihood  # noqa: E402
+from backend.analysis.hip.prosthesis_detector import (
+    estimate_prosthesis_likelihood,
+)  # noqa: E402
 from backend.data.manifest_dataset import load_manifest  # noqa: E402
 from backend.io.dicom_loader import DicomLoadError, load_dicom  # noqa: E402
 
@@ -39,7 +41,7 @@ def main() -> None:
     for row in hip_rows:
         is_true_prosthesis = row["excluded_reason"].strip() == "hip_endoprosthesis"
         if not is_true_prosthesis and row["excluded_reason"].strip():
-            continue  # прочие исключения (если появятся) -- не участвуют в проверке
+            continue
 
         try:
             study = load_dicom(row["image_path"])
@@ -69,7 +71,9 @@ def main() -> None:
     print(f"\nПротезы (n={tp + fn}): поймано {tp}, пропущено {fn}")
     print(f"Обычные снимки бедра (n={tn + fp}): верно {tn}, ложных срабатываний {fp}")
     if fp > 0:
-        print("\n[ВНИМАНИЕ] есть ложные срабатывания на обычных снимках -- разберите ниже, какие именно.")
+        print(
+            "\n[ВНИМАНИЕ] есть ложные срабатывания на обычных снимках -- разберите ниже, какие именно."
+        )
 
 
 if __name__ == "__main__":

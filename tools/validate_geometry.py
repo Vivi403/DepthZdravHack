@@ -22,10 +22,10 @@ from sklearn.metrics import confusion_matrix, f1_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from backend.analysis.hip.roi_geometry import estimate_hip_roi_margins  # noqa: E402
-from backend.analysis.spine.axis_geometry import estimate_spine_axis_angle  # noqa: E402
-from backend.data.manifest_dataset import load_manifest  # noqa: E402
-from backend.io.dicom_loader import DicomLoadError, load_dicom  # noqa: E402
+from backend.analysis.hip.roi_geometry import estimate_hip_roi_margins
+from backend.analysis.spine.axis_geometry import estimate_spine_axis_angle
+from backend.data.manifest_dataset import load_manifest
+from backend.io.dicom_loader import DicomLoadError, load_dicom
 
 
 def validate_spine(rows: list[dict]) -> None:

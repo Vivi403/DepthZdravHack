@@ -17,9 +17,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from backend.analysis.hip.prosthesis_detector import (
     estimate_prosthesis_likelihood,
-)  # noqa: E402
-from backend.data.manifest_dataset import load_manifest  # noqa: E402
-from backend.io.dicom_loader import DicomLoadError, load_dicom  # noqa: E402
+)
+from backend.data.manifest_dataset import load_manifest
+from backend.io.dicom_loader import DicomLoadError, load_dicom
 
 
 def main() -> None:

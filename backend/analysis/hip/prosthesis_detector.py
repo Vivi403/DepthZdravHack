@@ -83,9 +83,7 @@ def estimate_prosthesis_likelihood(
     saturation_fraction = float((bone_pixels >= saturation_threshold).mean())
 
     laplacian = cv2.Laplacian(pixel_array.astype(np.float32), cv2.CV_32F, ksize=3)
-    texture_score = float(
-        np.var(laplacian[bone_mask > 0])
-    )  # информационно, не в решении
+    texture_score = float(np.var(laplacian[bone_mask > 0]))
 
     is_likely_prosthesis = saturation_fraction >= saturation_fraction_cutoff
 

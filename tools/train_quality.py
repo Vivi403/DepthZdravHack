@@ -38,7 +38,7 @@ from torchvision.models import ResNet18_Weights, resnet18
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from backend.data.manifest_dataset import (  # noqa: E402
+from backend.data.manifest_dataset import (
     HIP_VIOLATION_CODES,
     SPINE_VIOLATION_CODES,
     QualityDataset,
@@ -75,9 +75,7 @@ def run_epoch(
     device: torch.device,
     optimizer: torch.optim.Optimizer | None = None,
 ) -> tuple[float, np.ndarray, np.ndarray]:
-    """Один проход по данным. Возвращает средний loss и все предсказания/метки
-    (сырые вероятности после сигмоиды, ещё без порога 0.5 -- порог применяется
-    снаружи, при расчёте метрик, чтобы его можно было менять не переобучая)."""
+    """Один проход по данным. Возвращает средний loss и все предсказания/метки."""
     is_train = optimizer is not None
     model.train(is_train)
 
@@ -111,14 +109,13 @@ def run_epoch(
 def compute_metrics(probs: np.ndarray, targets: np.ndarray, codes: list[str]) -> dict:
     """Per-label и агрегированные метрики.
 
-    per_label: F1 и ROC-AUC для каждого типа нарушения отдельно (п.8.4 ТЗ
-    просит метрики отдельно по каждому типу нарушения). ROC-AUC пропускается,
+    per_label: F1 и ROC-AUC для каждого типа нарушения отдельно. ROC-AUC пропускается,
     если в текущей выборке нет примеров обоих классов для этого лейбла --
     на маленьком val это реальный случай, а не баг.
 
     quality_class: агрегированная бинарная метрика "есть хоть одно нарушение"
     -- sensitivity (чувствительность выявления исследований с нарушениями)
-    и specificity (для качественно выполненных), обе явно требуются в п.8.4.
+    и specificity (для качественно выполненных).
     """
     preds = (probs >= 0.5).astype(int)
 
@@ -194,9 +191,7 @@ def main() -> None:
     val_ds = QualityDataset(
         val_rows, group=args.group, image_size=args.image_size, augment=False
     )
-    print(
-        f"Аугментация (яркость/контраст) train_ds: {train_ds.augment}"
-    )  # должно быть True
+    print(f"Аугментация (яркость/контраст) train_ds: {train_ds.augment}")
     print(f"train={len(train_ds)} val={len(val_ds)} (после фильтрации excluded_reason)")
 
     if len(val_ds) == 0 or len(train_ds) == 0:
@@ -225,7 +220,7 @@ def main() -> None:
     )
 
     # pos_weight по каждому лейблу отдельно -- ключевая мера борьбы с дисбалансом
-    # классов (п.8.1 ТЗ прямо просит объяснить, как обрабатывается дисбаланс).
+    # классов.
     # Считается ТОЛЬКО по train, чтобы не заглядывать в val.
     train_targets = np.stack(
         [train_ds[i]["violations"].numpy() for i in range(len(train_ds))]

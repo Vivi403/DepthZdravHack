@@ -32,11 +32,11 @@ from sklearn.metrics import f1_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from backend.analysis.hip.roi_geometry import estimate_hip_roi_margins  # noqa: E402
-from backend.analysis.spine.axis_geometry import estimate_spine_axis_angle  # noqa: E402
-from backend.data.manifest_dataset import load_manifest, split_by_study  # noqa: E402
-from backend.io.dicom_loader import DicomLoadError, load_dicom  # noqa: E402
-from backend.pipeline.quality_pipeline import QualityPredictor  # noqa: E402
+from backend.analysis.hip.roi_geometry import estimate_hip_roi_margins
+from backend.analysis.spine.axis_geometry import estimate_spine_axis_angle
+from backend.data.manifest_dataset import load_manifest, split_by_study
+from backend.io.dicom_loader import DicomLoadError, load_dicom
+from backend.pipeline.quality_pipeline import QualityPredictor
 
 
 def sweep_thresholds_above(
@@ -59,7 +59,9 @@ def sweep_thresholds_above(
         sens = tp / (tp + fn) if (tp + fn) > 0 else 0.0
         spec = tn / (tn + fp) if (tn + fp) > 0 else 0.0
         f1 = f1_score(y_true_arr, pred, zero_division=0)
-        rows.append({"threshold": t, "sensitivity": sens, "specificity": spec, "f1": f1})
+        rows.append(
+            {"threshold": t, "sensitivity": sens, "specificity": spec, "f1": f1}
+        )
 
     rows.sort(key=lambda r: r["f1"], reverse=True)
     qualifying = [r for r in rows if r["sensitivity"] >= min_sensitivity]
@@ -86,7 +88,9 @@ def sweep_thresholds_below(
         sens = tp / (tp + fn) if (tp + fn) > 0 else 0.0
         spec = tn / (tn + fp) if (tn + fp) > 0 else 0.0
         f1 = f1_score(y_true_arr, pred, zero_division=0)
-        rows.append({"threshold": t, "sensitivity": sens, "specificity": spec, "f1": f1})
+        rows.append(
+            {"threshold": t, "sensitivity": sens, "specificity": spec, "f1": f1}
+        )
 
     rows.sort(key=lambda r: r["f1"], reverse=True)
     qualifying = [r for r in rows if r["sensitivity"] >= min_sensitivity]
@@ -94,7 +98,9 @@ def sweep_thresholds_below(
     return rows, best
 
 
-def print_top(label: str, rows: list[dict], best: dict, default_threshold: float) -> None:
+def print_top(
+    label: str, rows: list[dict], best: dict, default_threshold: float
+) -> None:
     print(f"\n--- {label} ---")
     print(f"Топ-5 порогов по F1 (из перебора на train):")
     for r in rows[:5]:
@@ -102,7 +108,9 @@ def print_top(label: str, rows: list[dict], best: dict, default_threshold: float
             f"  T={r['threshold']:.3f}  F1={r['f1']:.3f}  "
             f"sensitivity={r['sensitivity']:.3f}  specificity={r['specificity']:.3f}"
         )
-    print(f"РЕКОМЕНДОВАННЫЙ порог (F1 при sensitivity >= 0.8): T={best['threshold']:.3f}")
+    print(
+        f"РЕКОМЕНДОВАННЫЙ порог (F1 при sensitivity >= 0.8): T={best['threshold']:.3f}"
+    )
     print(f"  (текущий порог по умолчанию: {default_threshold})")
 
 
@@ -122,7 +130,9 @@ def main() -> None:
     train_rows, val_rows, _ = split_by_study(
         rows, val_frac=args.val_frac, test_frac=args.test_frac, seed=args.seed
     )
-    print(f"Калибровка на train={len(train_rows)} (val={len(val_rows)} отложен для честной проверки)")
+    print(
+        f"Калибровка на train={len(train_rows)} (val={len(val_rows)} отложен для честной проверки)"
+    )
 
     import torch
 
@@ -131,8 +141,16 @@ def main() -> None:
     hip_model = QualityPredictor(args.hip_checkpoint, device)
 
     # --- сбор continuous-скоров на train ---
-    spine_true = {"incorrect_positioning": [], "foreign_object_or_artifact": [], "axis_tilt": []}
-    spine_score = {"incorrect_positioning": [], "foreign_object_or_artifact": [], "axis_tilt": []}
+    spine_true = {
+        "incorrect_positioning": [],
+        "foreign_object_or_artifact": [],
+        "axis_tilt": [],
+    }
+    spine_score = {
+        "incorrect_positioning": [],
+        "foreign_object_or_artifact": [],
+        "axis_tilt": [],
+    }
     hip_true = {"rotation_error": [], "roi": []}
     hip_score = {"rotation_error": [], "roi": []}
 
@@ -141,16 +159,22 @@ def main() -> None:
             study = load_dicom(row["image_path"])
         except DicomLoadError:
             continue
-        codes_present = set(row["violation_type"].split(";")) if row["violation_type"] else set()
+        codes_present = (
+            set(row["violation_type"].split(";")) if row["violation_type"] else set()
+        )
 
         if row["region"] == "spine":
             probs = spine_model.predict(study.pixel_array)
-            spine_true["incorrect_positioning"].append(int("incorrect_positioning" in codes_present))
+            spine_true["incorrect_positioning"].append(
+                int("incorrect_positioning" in codes_present)
+            )
             spine_score["incorrect_positioning"].append(probs["incorrect_positioning"])
             spine_true["foreign_object_or_artifact"].append(
                 int("foreign_object_or_artifact" in codes_present)
             )
-            spine_score["foreign_object_or_artifact"].append(probs["foreign_object_or_artifact"])
+            spine_score["foreign_object_or_artifact"].append(
+                probs["foreign_object_or_artifact"]
+            )
 
             axis_result = estimate_spine_axis_angle(study.pixel_array)
             spine_true["axis_tilt"].append(int("axis_tilt_over_5deg" in codes_present))
@@ -162,7 +186,9 @@ def main() -> None:
             hip_true["rotation_error"].append(int("rotation_error" in codes_present))
             hip_score["rotation_error"].append(probs["rotation_error"])
 
-            roi_result = estimate_hip_roi_margins(study.pixel_array, study.pixel_spacing_mm)
+            roi_result = estimate_hip_roi_margins(
+                study.pixel_array, study.pixel_spacing_mm
+            )
             min_margin = min(roi_result.margin_left_mm, roi_result.margin_right_mm)
             hip_true["roi"].append(int("roi_incorrect" in codes_present))
             hip_score["roi"].append(min_margin)
@@ -179,7 +205,9 @@ def main() -> None:
     table, best = sweep_thresholds_above(
         spine_true["axis_tilt"], spine_score["axis_tilt"], args.min_sensitivity
     )
-    print_top("axis_tilt_over_5deg (геометрия, градусы)", table, best, default_threshold=5.0)
+    print_top(
+        "axis_tilt_over_5deg (геометрия, градусы)", table, best, default_threshold=5.0
+    )
 
     print("\n" + "=" * 60)
     print("HIP")
@@ -189,8 +217,15 @@ def main() -> None:
     )
     print_top("rotation_error", table, best, default_threshold=0.5)
 
-    table, best = sweep_thresholds_below(hip_true["roi"], hip_score["roi"], args.min_sensitivity)
-    print_top("roi_incorrect (геометрия, min(лево,право) в мм)", table, best, default_threshold=20.0)
+    table, best = sweep_thresholds_below(
+        hip_true["roi"], hip_score["roi"], args.min_sensitivity
+    )
+    print_top(
+        "roi_incorrect (геометрия, min(лево,право) в мм)",
+        table,
+        best,
+        default_threshold=20.0,
+    )
 
 
 if __name__ == "__main__":

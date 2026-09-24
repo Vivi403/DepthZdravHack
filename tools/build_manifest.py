@@ -80,7 +80,7 @@ def load_quality_labels(xlsx_path: str) -> dict:
 
     Если экспертный итог по области отсутствует (клетка J/K/L пустая), запись
     всё равно создаётся, но quality_class=None и заполняется excluded_reason --
-    такие строки не выбрасываются молча, а идут в манифест помеченными, чтобы
+    такие строки не выбрасываются, а идут в манифест помеченными, чтобы
     осознанно исключить их на этапе обучения и не потерять из виду на защите.
     """
     wb = openpyxl.load_workbook(xlsx_path, data_only=True)
@@ -166,8 +166,7 @@ def build_manifest(
 
             if region not in ALLOWED_REGIONS:
                 # значение вроде "error" -- не опечатка в spine/hip_*, а осознанная
-                # пометка проблемного файла человеком. Не молчим и не пытаемся
-                # угадать -- откладываем в сторону для ручной проверки.
+                # пометка проблемного файла.
                 skipped_unrecognized_region.append(row)
                 continue
 
@@ -181,9 +180,9 @@ def build_manifest(
                 continue
 
             label = study_labels[region]
-            # relative_path приходит из CSV, отредактированного на Windows (разделитель \) --
+            # relative_path приходит из CSV, отредактированного на Windows --
             # нормализуем в POSIX-стиль (/), иначе путь развалится при запуске в
-            # Linux-контейнере, как того требует финальное развёртывание (п.3.2 ТЗ)
+            # Linux-контейнере
             normalized_rel_path = row["relative_path"].replace("\\", "/")
             image_path = studies_root / study_uid / normalized_rel_path
 

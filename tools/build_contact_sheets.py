@@ -48,9 +48,7 @@ def load_thumbnail(path: Path):
 
 
 def find_dcm_files(study_dir: Path) -> list[Path]:
-    """Рекурсивный поиск .dcm на любой глубине внутри папки исследования --
-    структура вложенности (series_XX/.../DXA/CR DXA/...) не важна и может
-    отличаться от исследования к исследованию."""
+    """Рекурсивный поиск .dcm на любой глубине внутри папки исследования"""
     return sorted(study_dir.rglob("*.dcm"))
 
 
@@ -113,9 +111,6 @@ def main(studies_root: str, out_dir: str, template_csv: str) -> None:
             rows.append(
                 {
                     "study_uid": study_dir.name,
-                    # путь относительно папки исследования, включая все
-                    # промежуточные подпапки -- нужен, чтобы потом однозначно
-                    # найти файл на диске (study_dir / relative_path)
                     "relative_path": rel_path,
                     # заполняется руками: spine / hip_left / hip_right / other
                     "region": "",

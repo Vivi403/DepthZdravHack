@@ -28,7 +28,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from backend.pipeline.quality_pipeline import QualityPipeline  # noqa: E402
+from backend.pipeline.quality_pipeline import QualityPipeline
 
 
 def find_dcm_files(input_path: Path) -> list[Path]:
@@ -161,7 +161,6 @@ def main() -> None:
         hip_quality_checkpoint=args.hip_checkpoint,
     )
     if nn_thresholds_override:
-        # частичное переопределение -- остальные берутся из откалиброванных по умолчанию
         from backend.pipeline.quality_pipeline import DEFAULT_NN_THRESHOLDS
 
         merged = dict(DEFAULT_NN_THRESHOLDS)
